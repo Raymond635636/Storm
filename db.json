@@ -1,0 +1,32 @@
+{
+  "films": [
+    {
+      "id": 1,
+      "title": "The Batman",
+      "poster": "batman.jpg",
+      "runtime": "2h 56m",
+      "capacity": 100,
+      "tickets_sold": 75,
+      "showtime": "7:00 PM"
+    },
+    {
+      "id": 2,
+      "title": "Dune: Part Two",
+      "poster": "dune.jpg",
+      "runtime": "2h 35m",
+      "capacity": 80,
+      "tickets_sold": 60,
+      "showtime": "9:00 PM"
+    },
+    {
+      "id": 3,
+      "title": "Ousmane's Promised Balon D'or",
+      "poster": "ousmane.jpg",
+      "runtime": "1h 45m",
+      "capacity": 120,
+      "tickets_sold": 20,
+      "showtime": "8:30 PM"
+    }
+  ]
+}
+

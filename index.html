@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ray's Movies</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: linear-gradient(to right, #ffecd2, #fcb69f);
+      color: #333;
+    }
+    header {
+      background: linear-gradient(90deg, #ff512f, #dd2476);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
+    }
+    main {
+      flex: 1;
+      display: flex;
+    }
+    #sidebar {
+      width: 240px;
+      background: #fff3e6;
+      border-right: 2px solid #ff914d;
+      padding: 15px;
+      box-shadow: inset -2px 0px 5px rgba(0,0,0,0.1);
+    }
+    #films {
+      list-style: none;
+      padding: 0;
+    }
+    .film.item {
+      margin: 10px 0;
+      cursor: pointer;
+      padding: 8px;
+      background: #ffe0b3;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.2s;
+    }
+    .film.item:hover {
+      background: #ffb366;
+    }
+    .film.item.sold-out {
+      color: red;
+      text-decoration: line-through;
+      background: #ffd6cc;
+    }
+    #movie-details {
+      flex: 1;
+      padding: 30px;
+      text-align: center;
+      background: #fff;
+      border-left: 2px solid #ff914d;
+    }
+    img {
+      max-width: 250px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 8px rgba(0,0,0,0.3);
+    }
+    button {
+      margin: 10px;
+      padding: 12px 24px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: bold;
+      background: linear-gradient(90deg, #36d1dc, #5b86e5);
+      color: white;
+      transition: 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #5b86e5, #36d1dc);
+    }
+  </style>
+</head>
+<body>
+  <header>Ray's Movies</header>
+  <main>
+    <!-- Sidebar with film list -->
+    <aside id="sidebar">
+      <ul id="films"></ul>
+    </aside>
+
+    <!-- Movie details -->
+    <section id="movie-details">
+      <img id="poster" src="" alt="Movie Poster">
+      <h2 id="title"></h2>
+      <p><strong>Runtime:</strong> <span id="runtime"></span></p>
+      <p><strong>Showtime:</strong> <span id="showtime"></span></p>
+      <p><strong>Available Tickets:</strong> <span id="available-tickets"></span></p>
+      <button id="buy-ticket">Buy Ticket</button>
+    </section>
+  </main>
+
+  <script>
+    const filmsList = document.getElementById("films");
+    const poster = document.getElementById("poster");
+    const title = document.getElementById("title");
+    const runtime = document.getElementById("runtime");
+    const showtime = document.getElementById("showtime");
+    const availableTickets = document.getElementById("available-tickets");
+    const buyTicketBtn = document.getElementById("buy-ticket");
+
+    let currentFilm = null;
+
+    // Load films
+    function loadFilms() {
+      fetch("http://localhost:3000/films")
+        .then(res => res.json())
+        .then(films => {
+          filmsList.innerHTML = "";
+          films.forEach(film => {
+            const li = document.createElement("li");
+            li.className = "film item";
+            li.textContent = film.title;
+
+            // Delete button
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "X";
+            deleteBtn.style.background = "red";
+            deleteBtn.style.marginLeft = "10px";
+            deleteBtn.onclick = (e) => {
+              e.stopPropagation();
+              deleteFilm(film.id, li);
+            };
+
+            li.appendChild(deleteBtn);
+
+            // Load details on click
+            li.onclick = () => showFilmDetails(film);
+
+            // Mark sold out
+            if (film.tickets_sold >= film.capacity) {
+              li.classList.add("sold-out");
+            }
+
+            filmsList.appendChild(li);
+          });
+          if (films.length > 0) showFilmDetails(films[0]);
+        });
+    }
+
+    // Show film details
+    function showFilmDetails(film) {
+      currentFilm = film;
+      poster.src = film.poster;
+      title.textContent = film.title;
+      runtime.textContent = film.runtime;
+      showtime.textContent = film.showtime;
+      const available = film.capacity - film.tickets_sold;
+      availableTickets.textContent = available;
+      buyTicketBtn.textContent = available > 0 ? "Buy Ticket" : "Sold Out";
+      buyTicketBtn.disabled = available <= 0;
+    }
+
+    // Buy a ticket
+    buyTicketBtn.addEventListener("click", () => {
+      if (!currentFilm) return;
+      const available = currentFilm.capacity - currentFilm.tickets_sold;
+      if (available > 0) {
+        currentFilm.tickets_sold++;
+        fetch(`http://localhost:3000/films/${currentFilm.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tickets_sold: currentFilm.tickets_sold })
+        }).then(() => showFilmDetails(currentFilm));
+      }
+    });
+
+    // Delete a film
+    function deleteFilm(id, li) {
+      fetch(`http://localhost:3000/films/${id}`, { method: "DELETE" })
+        .then(() => li.remove());
+    }
+
+    loadFilms();
+  </script>
+</body>
+</html>
